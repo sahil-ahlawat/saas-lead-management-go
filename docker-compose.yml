@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  sa_sass_api:
+    build:
+      context: ./api
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    depends_on:
+      - sa_sass_db
+      - sa_sass_redis
+
+  sa_sass_db:
+    build:
+      context: ./db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: lead_management
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - app-network
+
+  sa_sass_redis:
+    build:
+      context: ./redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  sa_sass_adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    depends_on:
+      - sa_sass_db
+
+  sa_sass_redis_commander:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:sa_sass_redis:6379
+    networks:
+      - app-network
+    depends_on:
+      - sa_sass_redis
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
